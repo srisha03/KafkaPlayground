@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template_string, redirect, url_for
 from kafka import KafkaProducer
+import json
+from datetime import datetime
 
 app = Flask(__name__)
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
@@ -8,7 +10,9 @@ producer = KafkaProducer(bootstrap_servers='localhost:9092')
 def index():
     if request.method == 'POST':
         search_term = request.form['search']
-        producer.send('test-topic', key=b'search_term', value=bytes(search_term, 'utf-8'))
+        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        message = json.dumps({'search_term': search_term, 'timestamp': timestamp})
+        producer.send('test-topic', value=bytes(message, 'utf-8'))
         return redirect(url_for('results'))
     return render_template_string(home_template)
 
